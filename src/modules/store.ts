@@ -26,7 +26,11 @@ const persistConfig = {
 const persistedRootReducer = persistReducer(persistConfig, rootReducer);
 
 const sagaMiddleware = createSagaMiddleware();
-const middleware: Middleware[] = [logger, sagaMiddleware];
+const middleware: Middleware[] = [];
+if (process.env.NODE_ENV === "development") {
+  middleware.push(logger);
+}
+middleware.push(sagaMiddleware);
 
 export const store = createStore(
   persistedRootReducer,

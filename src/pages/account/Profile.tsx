@@ -1,20 +1,73 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { Redirect } from 'react-router-dom';
-import { selectIsLoggedIn } from '../../modules/user';
+import React, { useEffect, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Redirect } from "react-router-dom";
+import {
+  selectIsLoggedIn,
+  selectToken,
+  selectApiKey,
+  signOutStart,
+  fetchTokenStart,
+  fetchApiKeyStart,
+  createApiKeyStart,
+} from "../../modules/user";
 
 function Profile() {
+  const dispatch = useDispatch();
   const isLoggedIn = useSelector(selectIsLoggedIn);
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      dispatch(fetchApiKeyStart());
+    }
+  }, [isLoggedIn, dispatch]);
+
+  const token = useSelector(selectToken);
+  const apiKey = useSelector(selectApiKey);
+
+  const signOut = useCallback(() => dispatch(signOutStart()), [dispatch]);
+  const fetchToken = useCallback(() => dispatch(fetchTokenStart()), [dispatch]);
+  const fetchApiKey = useCallback(() => dispatch(fetchApiKeyStart()), [
+    dispatch,
+  ]);
+  const createApiKey = useCallback(() => dispatch(createApiKeyStart()), [
+    dispatch,
+  ]);
+
   if (!isLoggedIn) {
-    return (
-      <Redirect to='/account/login' />
-    );
+    return <Redirect to="/account/login" />;
   }
 
   return (
-    <div>
-      Dashboard
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: "36rem",
+        margin: "1rem auto",
+      }}
+    >
+      <button type="button" onClick={signOut}>
+        Sign Out
+      </button>
+      <p>Dashboard</p>
+      <button type="button" onClick={fetchToken}>
+        Fetch Token
+      </button>
+      <p style={{ overflowWrap: "break-word" }}>{token || "No token."}</p>
+      {apiKey ? (
+        <React.Fragment>
+          <button type="button" onClick={fetchApiKey}>
+            Fetch Api Key
+          </button>
+          <p style={{ overflowWrap: "break-word" }}>
+            {apiKey || "No api key."}
+          </p>
+        </React.Fragment>
+      ) : (
+        <button type="button" onClick={createApiKey}>
+          Create Api Key
+        </button>
+      )}
     </div>
   );
 }

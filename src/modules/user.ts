@@ -5,9 +5,11 @@ import moment from "moment";
 import jwtDecode from "jwt-decode";
 import { API_URL } from "../config";
 import { IState } from "./store";
-import { ApiErrorTypes } from "../config";
+import { ApiErrorResponseTypes } from "../config";
 
 // --- ACTION TYPES ---
+const USER_TEST = "USER_TEST";
+
 const USER_SIGNUP_START = "USER_SIGNUP_START";
 const USER_SIGNUP_SUCCESS = "USER_SIGNUP_SUCCESS";
 const USER_SIGNUP_FAILURE = "USER_SIGNUP_FAILURE";
@@ -28,7 +30,30 @@ const FETCH_API_KEY_START = "FETCH_API_KEY_START";
 const FETCH_API_KEY_SUCCESS = "FETCH_API_KEY_SUCCESS";
 const FETCH_API_KEY_FAILURE = "FETCH_API_KEY_FAILURE";
 
+const CREATE_API_KEY_START = "CREATE_API_KEY_START";
+const CREATE_API_KEY_SUCCESS = "CREATE_API_KEY_SUCCESS";
+const CREATE_API_KEY_FAILURE = "CREATE_API_KEY_FAILURE";
+
 // --- ACTION CREATORS ---
+
+// Errors
+export function userTest() {
+  return {
+    type: USER_TEST as typeof USER_TEST,
+  };
+}
+
+export function invalidRefreshToken() {
+  return {
+    type: ApiErrorResponseTypes.INVALID_REFRESH_TOKEN as typeof ApiErrorResponseTypes.INVALID_REFRESH_TOKEN,
+  };
+}
+
+export function invalidToken() {
+  return {
+    type: ApiErrorResponseTypes.INVALID_TOKEN as typeof ApiErrorResponseTypes.INVALID_TOKEN,
+  };
+}
 
 // Sign Up
 export function signUpStart({
@@ -47,15 +72,15 @@ export function signUpStart({
   };
 }
 
-interface ISignUpUserInfo {
+export interface ISignUpUserInfo {
   profile: {
     id: string;
     email: string;
   };
   token: string;
   refreshToken: string;
-  tokenExpiration: moment.Moment;
-  refreshTokenExpiration: moment.Moment;
+  tokenExpiration: string;
+  refreshTokenExpiration: string;
 }
 
 export function signUpSuccess(userInfo: ISignUpUserInfo) {
@@ -89,7 +114,7 @@ export function loginStart({
   };
 }
 
-type ILoginUserInfo = ISignUpUserInfo;
+export type ILoginUserInfo = ISignUpUserInfo;
 
 export function loginSuccess(userInfo: ILoginUserInfo) {
   return {
@@ -134,7 +159,7 @@ export function fetchTokenStart() {
 
 export function fetchTokenSuccess(tokenInfo: {
   token: string;
-  tokenExpiration: moment.Moment;
+  tokenExpiration: string;
 }) {
   return {
     type: FETCH_TOKEN_SUCCESS as typeof FETCH_TOKEN_SUCCESS,
@@ -149,7 +174,7 @@ export function fetchTokenFailure(error: Error) {
   };
 }
 
-// Fetch Api Key
+// Fetch API Key
 export function fetchApiKeyStart() {
   return {
     type: FETCH_API_KEY_START as typeof FETCH_API_KEY_START,
@@ -170,7 +195,31 @@ export function fetchApiKeyFailure(error: Error) {
   };
 }
 
+// Create API Key
+export function createApiKeyStart() {
+  return {
+    type: CREATE_API_KEY_START as typeof CREATE_API_KEY_START,
+  };
+}
+
+export function createApiKeySuccess(apiKey: string) {
+  return {
+    type: CREATE_API_KEY_SUCCESS as typeof CREATE_API_KEY_SUCCESS,
+    payload: apiKey,
+  };
+}
+
+export function createApiKeyFailure(error: Error) {
+  return {
+    type: CREATE_API_KEY_FAILURE as typeof CREATE_API_KEY_FAILURE,
+    payload: error,
+  };
+}
+
 // Action Creator Return Types
+type UserTestAction = ReturnType<typeof userTest>;
+type InvalidRefreshTokenAction = ReturnType<typeof invalidRefreshToken>;
+type InvalidTokenAction = ReturnType<typeof invalidToken>;
 type SignUpStartAction = ReturnType<typeof signUpStart>;
 type SignUpSuccessAction = ReturnType<typeof signUpSuccess>;
 type SignUpFailureAction = ReturnType<typeof signUpFailure>;
@@ -183,11 +232,17 @@ type SignOutFailureAction = ReturnType<typeof signOutFailure>;
 type FetchApiKeyStartAction = ReturnType<typeof fetchApiKeyStart>;
 type FetchApiKeySuccessAction = ReturnType<typeof fetchApiKeySuccess>;
 type FetchApiKeyFailureAction = ReturnType<typeof fetchApiKeyFailure>;
+type CreateApiKeyStartAction = ReturnType<typeof createApiKeyStart>;
+type CreateApiKeySuccessAction = ReturnType<typeof createApiKeySuccess>;
+type CreateApiKeyFailureAction = ReturnType<typeof createApiKeyFailure>;
 type FetchTokenStartAction = ReturnType<typeof fetchTokenStart>;
 type FetchTokenSuccessAction = ReturnType<typeof fetchTokenSuccess>;
 type FetchTokenFailureAction = ReturnType<typeof fetchTokenFailure>;
 
 type UserActions =
+  | UserTestAction
+  | InvalidRefreshTokenAction
+  | InvalidTokenAction
   | SignUpStartAction
   | SignUpSuccessAction
   | SignUpFailureAction
@@ -200,6 +255,9 @@ type UserActions =
   | FetchApiKeyStartAction
   | FetchApiKeySuccessAction
   | FetchApiKeyFailureAction
+  | CreateApiKeyStartAction
+  | CreateApiKeySuccessAction
+  | CreateApiKeyFailureAction
   | FetchTokenStartAction
   | FetchTokenSuccessAction
   | FetchTokenFailureAction;
@@ -212,12 +270,12 @@ export interface IUserState {
   } | null;
   token: string | null;
   refreshToken: string | null;
-  tokenExpiration: moment.Moment | null;
-  refreshTokenExpiration: moment.Moment | null;
+  tokenExpiration: string | null;
+  refreshTokenExpiration: string | null;
   apiKey: string | null;
 }
 
-const INITIAL_STATE: IUserState = {
+export const INITIAL_STATE: IUserState = {
   profile: null,
   token: null,
   refreshToken: null,
@@ -247,6 +305,7 @@ export function userReducer(state = INITIAL_STATE, action: UserActions) {
       };
     case USER_SIGNOUT_FAILURE:
     case USER_SIGNOUT_SUCCESS:
+    case ApiErrorResponseTypes.INVALID_REFRESH_TOKEN:
       return {
         profile: null,
         token: null,
@@ -262,10 +321,22 @@ export function userReducer(state = INITIAL_STATE, action: UserActions) {
         tokenExpiration: action.payload.tokenExpiration,
       };
     case FETCH_TOKEN_FAILURE:
+    case ApiErrorResponseTypes.INVALID_TOKEN:
       return {
         ...state,
         token: null,
         tokenExpiration: null,
+      };
+    case FETCH_API_KEY_SUCCESS:
+    case CREATE_API_KEY_SUCCESS:
+      return {
+        ...state,
+        apiKey: action.payload,
+      };
+    case FETCH_API_KEY_FAILURE:
+      return {
+        ...state,
+        apiKey: null,
       };
     default:
       return state;
@@ -305,10 +376,12 @@ export const selectIsLoggedIn = createSelector(
     moment(tokenExpiration).isAfter(moment())
 );
 
+export const selectApiKey = createSelector([selectUser], (user) => user.apiKey);
+
 // --- SAGAS ---
 
 // Types
-interface IUser {
+export interface IUser {
   _id: string;
   email: string;
   passwordHash: string;
@@ -316,23 +389,42 @@ interface IUser {
   updatedAt: string;
 }
 
-interface ISignUpResponse {
+export interface ISignUpResponse {
   token: string;
   refreshToken: string;
   user: IUser;
 }
 
-type ILoginResponse = ISignUpResponse;
+export type ILoginResponse = ISignUpResponse;
 
-export interface DecodedToken {
+export interface IDecodedToken {
   userId: string;
   email: string;
   expiration: string;
 }
 
-interface TokenResponse {
+export interface ITokenResponse {
   message: string;
   token: string;
+}
+
+export interface IApiKeyResponse {
+  message: string;
+  apiKey: string;
+}
+
+// Handle API Typed Errors
+function* handleApiTypedErrors(error: any) {
+  if (error.response && error.response.type) {
+    switch (error.response.type) {
+      case ApiErrorResponseTypes.INVALID_REFRESH_TOKEN:
+        yield put(invalidRefreshToken());
+        break;
+      case ApiErrorResponseTypes.INVALID_TOKEN:
+        yield put(invalidToken());
+        break;
+    }
+  }
 }
 
 // Token Refresh
@@ -347,7 +439,7 @@ function* checkValidRefreshToken() {
   if (
     !refreshToken ||
     !refreshTokenExpiration ||
-    refreshTokenExpiration.isBefore(moment())
+    moment(refreshTokenExpiration).isBefore(moment())
   ) {
     const isLoggedIn: ReturnType<typeof selectIsLoggedIn> = yield select(
       selectIsLoggedIn
@@ -367,19 +459,47 @@ function* checkValidToken() {
     selectTokenExpiration
   );
 
-  if (!token || !tokenExpiration || tokenExpiration.isBefore(moment())) {
+  if (
+    !token ||
+    !tokenExpiration ||
+    moment(tokenExpiration).isBefore(moment())
+  ) {
     return false;
   }
 
   return true;
 }
 
-// Sign Up
-function* watchSignUpSaga() {
-  yield takeLatest(USER_SIGNUP_START, signUpStartSaga);
+function* ensureValidRefreshToken() {
+  try {
+    const isValidRefreshToken = yield call(checkValidRefreshToken);
+    if (!isValidRefreshToken) {
+      const error = new Error("Invalid refresh token.");
+      throw error;
+    }
+  } catch (error) {
+    throw error;
+  }
 }
 
-function* signUpStartSaga(action: SignUpStartAction) {
+function* ensureValidToken() {
+  try {
+    const isValidToken = yield call(checkValidToken);
+    if (!isValidToken) {
+      yield call(ensureValidRefreshToken);
+      yield put(fetchTokenStart());
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Sign Up
+export function* watchSignUpSaga() {
+  yield takeLatest(USER_SIGNUP_START, signUpSaga);
+}
+
+export function* signUpSaga(action: SignUpStartAction) {
   try {
     const url = API_URL + "/auth/signup";
     const response = yield call(axios.post, url, {
@@ -387,8 +507,8 @@ function* signUpStartSaga(action: SignUpStartAction) {
       password: action.payload.password,
     });
     const { token, refreshToken, user }: ISignUpResponse = response.data;
-    const { expiration: tokenExpiration }: DecodedToken = jwtDecode(token);
-    const { expiration: refreshTokenExpiration }: DecodedToken = jwtDecode(
+    const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
+    const { expiration: refreshTokenExpiration }: IDecodedToken = jwtDecode(
       refreshToken
     );
     const profile = {
@@ -401,30 +521,24 @@ function* signUpStartSaga(action: SignUpStartAction) {
         profile,
         token,
         refreshToken,
-        tokenExpiration: moment(tokenExpiration),
-        refreshTokenExpiration: moment(refreshTokenExpiration),
+        tokenExpiration,
+        refreshTokenExpiration,
       })
     );
     return;
   } catch (error) {
-    console.log(error);
-
-    if (error.isAxiosError) {
-      yield put(signUpFailure(Error(error.response.data.message)));
-      return;
-    }
-
+    yield call(handleApiTypedErrors, error);
     yield put(signUpFailure(error));
     return;
   }
 }
 
 // Login
-function* watchLoginSaga() {
-  yield takeLatest(USER_LOGIN_START, loginStartSaga);
+export function* watchLoginSaga() {
+  yield takeLatest(USER_LOGIN_START, loginSaga);
 }
 
-function* loginStartSaga(action: LoginStartAction) {
+export function* loginSaga(action: LoginStartAction) {
   try {
     const url = API_URL + "/auth/login";
     const response = yield call(axios.post, url, {
@@ -433,8 +547,8 @@ function* loginStartSaga(action: LoginStartAction) {
     });
 
     const { token, refreshToken, user }: ILoginResponse = response.data;
-    const { expiration: tokenExpiration }: DecodedToken = jwtDecode(token);
-    const { expiration: refreshTokenExpiration }: DecodedToken = jwtDecode(
+    const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
+    const { expiration: refreshTokenExpiration }: IDecodedToken = jwtDecode(
       refreshToken
     );
     const profile = {
@@ -447,52 +561,45 @@ function* loginStartSaga(action: LoginStartAction) {
         profile,
         token,
         refreshToken,
-        tokenExpiration: moment(tokenExpiration),
-        refreshTokenExpiration: moment(refreshTokenExpiration),
+        tokenExpiration,
+        refreshTokenExpiration,
       })
     );
     return;
   } catch (error) {
-    console.log(error);
-
-    if (error.isAxiosError) {
-      yield put(loginFailure(Error(error.response.data.message)));
-      return;
-    }
-
+    yield call(handleApiTypedErrors, error);
     yield put(loginFailure(error));
     return;
   }
 }
 
 // Sign Out
-function* watchSignOutSaga() {
-  yield takeLatest(USER_SIGNUP_START, signOutSaga);
+export function* watchSignOutSaga() {
+  yield takeLatest(USER_SIGNOUT_START, signOutSaga);
 }
 
-function* signOutSaga() {
+export function* signOutSaga() {
   try {
-    const isTokenValid = yield call(checkValidToken);
-    if (!isTokenValid) {
-      const isRefreshTokenValid: boolean = yield call(checkValidRefreshToken);
-      if (!isRefreshTokenValid) {
-        const error = Error("Invalid refresh token.");
-        throw error;
-      } else {
-        yield put(fetchTokenStart());
-      }
-    }
+    yield call(ensureValidToken);
 
     const {
       token,
       refreshToken,
     }: ReturnType<typeof selectTokens> = yield select(selectTokens);
 
-    const url = API_URL + "/auth/logout";
-    yield call(axios.post, url, {
-      token,
-      refreshToken,
-    });
+    const url = API_URL + "/auth/signout";
+    yield call(
+      axios.post,
+      url,
+      {
+        refreshToken,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     yield put(signOutSuccess());
   } catch (error) {
     yield put(signOutFailure(error));
@@ -500,11 +607,11 @@ function* signOutSaga() {
 }
 
 // Fetch Token
-function* watchFetchTokenSaga() {
+export function* watchFetchTokenSaga() {
   yield takeLatest(FETCH_TOKEN_START, fetchTokenSaga);
 }
 
-function* fetchTokenSaga() {
+export function* fetchTokenSaga() {
   try {
     const isRefreshTokenValid: boolean = yield call(checkValidRefreshToken);
     if (!isRefreshTokenValid) {
@@ -519,23 +626,75 @@ function* fetchTokenSaga() {
       refreshToken,
     });
 
-    const { token }: TokenResponse = response.data;
-    const { expiration: tokenExpiration }: DecodedToken = jwtDecode(token);
+    const { token }: ITokenResponse = response.data;
+    const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
 
-    yield put(
-      fetchTokenSuccess({ token, tokenExpiration: moment(tokenExpiration) })
-    );
+    yield put(fetchTokenSuccess({ token, tokenExpiration }));
     return;
   } catch (error) {
-    if (
-      error.response &&
-      error.response.type &&
-      error.response.type === ApiErrorTypes.INVALID_REFRESH_TOKEN
-    ) {
-      yield put(signOutStart());
-    }
-
+    yield call(handleApiTypedErrors, error);
     yield put(fetchTokenFailure(error));
+    return;
+  }
+}
+
+export function* watchFetchApiKeySaga() {
+  yield takeLatest(FETCH_API_KEY_START, fetchApiKeySaga);
+}
+
+export function* fetchApiKeySaga() {
+  try {
+    yield call(ensureValidToken);
+
+    const token: ReturnType<typeof selectToken> = yield select(selectToken);
+
+    const url = API_URL + "/api-key";
+
+    const response = yield call(axios.get, url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { apiKey }: IApiKeyResponse = response.data;
+
+    yield put(fetchApiKeySuccess(apiKey));
+    return;
+  } catch (error) {
+    yield call(handleApiTypedErrors, error);
+    yield put(fetchApiKeyFailure(error));
+    return;
+  }
+}
+
+export function* watchCreateApiKeySaga() {
+  yield takeLatest(CREATE_API_KEY_START, createApiKeySaga);
+}
+
+export function* createApiKeySaga() {
+  try {
+    const token: ReturnType<typeof selectToken> = yield select(selectToken);
+
+    const url = API_URL + "/api-key";
+
+    const response = yield call(
+      axios.post,
+      url,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const { apiKey }: IApiKeyResponse = response.data;
+
+    yield put(createApiKeySuccess(apiKey));
+    return;
+  } catch (error) {
+    yield call(handleApiTypedErrors, error);
+    yield put(createApiKeyFailure(error));
     return;
   }
 }
@@ -546,5 +705,7 @@ export function* userSagas() {
     call(watchLoginSaga),
     call(watchSignOutSaga),
     call(watchFetchTokenSaga),
+    call(watchFetchApiKeySaga),
+    call(watchCreateApiKeySaga),
   ]);
 }
