@@ -1,6 +1,14 @@
-import { takeLatest, call, put, select, all } from "redux-saga/effects";
+import {
+  takeLatest,
+  takeEvery,
+  call,
+  put,
+  select,
+  all,
+} from "redux-saga/effects";
 import { createSelector } from "reselect";
 import axios from "axios";
+import moment from "moment";
 import { IState } from "./store";
 import { selectApiKey, selectToken, ensureValidToken } from "./user";
 import { API_URL } from "../config";
@@ -9,11 +17,13 @@ export interface IMessage {
   _id: string;
   message: string;
   createdAt: string;
+  unResolved?: boolean;
 }
 
 // --- ACTION TYPES ---
 
 export const CREATE_MESSAGE_START = "CREATE_MESSAGE_START";
+export const CREATE_MESSAGE_PENDING = "CREATE_MESSAGE_PENDING";
 export const CREATE_MESSAGE_SUCCESS = "CREATE_MESSAGE_SUCCESS";
 export const CREATE_MESSAGE_FAILURE = "CREATE_MESSAGE_FAILURE";
 
@@ -39,9 +49,26 @@ export function createMessageStart(message: string) {
   };
 }
 
-export function createMessageSuccess() {
+export function createMessagePending(message: IMessage) {
+  return {
+    type: CREATE_MESSAGE_PENDING as typeof CREATE_MESSAGE_PENDING,
+    payload: message,
+  };
+}
+
+export function createMessageSuccess({
+  tempId,
+  message,
+}: {
+  tempId: string;
+  message: IMessageResponse;
+}) {
   return {
     type: CREATE_MESSAGE_SUCCESS as typeof CREATE_MESSAGE_SUCCESS,
+    payload: {
+      tempId,
+      message,
+    },
   };
 }
 
@@ -96,17 +123,35 @@ export function fetchMoreMessagesFailure(error: Error) {
 }
 
 // Add Message
-export function addMessageStart(message: IMessage) {
+export function addMessageStart({
+  message,
+  tempId,
+}: {
+  message: IMessageResponse;
+  tempId?: string;
+}) {
   return {
     type: ADD_MESSAGE_START as typeof ADD_MESSAGE_START,
-    payload: message,
+    payload: {
+      message,
+      tempId,
+    },
   };
 }
 
-export function addMessageSuccess(message: IMessage) {
+export function addMessageSuccess({
+  message,
+  tempId,
+}: {
+  message: IMessageResponse;
+  tempId?: string;
+}) {
   return {
     type: ADD_MESSAGE_SUCCESS as typeof ADD_MESSAGE_SUCCESS,
-    payload: message,
+    payload: {
+      message,
+      tempId,
+    },
   };
 }
 
@@ -119,6 +164,7 @@ export function addMessageFailure(error: Error) {
 
 // Action Creator Return Types
 type CreateMessageStartAction = ReturnType<typeof createMessageStart>;
+type CreateMessagePendingAction = ReturnType<typeof createMessagePending>;
 type CreateMessageSuccessAction = ReturnType<typeof createMessageSuccess>;
 type CreateMessageFailureAction = ReturnType<typeof createMessageFailure>;
 type FetchMessagesStartAction = ReturnType<typeof fetchMessagesStart>;
@@ -131,12 +177,13 @@ type FetchMoreMessagesSuccessAction = ReturnType<
 type FetchMoreMessagesFailureAction = ReturnType<
   typeof fetchMoreMessagesFailure
 >;
+type AddMessageStartAction = ReturnType<typeof addMessageStart>;
 type AddMessageSuccessAction = ReturnType<typeof addMessageSuccess>;
 type AddMessageFailureAction = ReturnType<typeof addMessageFailure>;
-type AddMessageStartAction = ReturnType<typeof addMessageStart>;
 
 type MessagesActions =
   | CreateMessageStartAction
+  | CreateMessagePendingAction
   | CreateMessageSuccessAction
   | CreateMessageFailureAction
   | FetchMessagesStartAction
@@ -164,8 +211,23 @@ export function messagesReducer(
       return action.payload;
     case FETCH_MORE_MESSAGES_SUCCESS:
       return removeDuplicateMessages([...state, ...action.payload]);
-    case ADD_MESSAGE_SUCCESS:
+    case CREATE_MESSAGE_PENDING:
       return [action.payload, ...state];
+    case CREATE_MESSAGE_SUCCESS:
+      return resolveMessage(
+        action.payload.tempId,
+        action.payload.message,
+        state
+      );
+    case ADD_MESSAGE_SUCCESS:
+      if (action.payload.tempId) {
+        return resolveMessage(
+          action.payload.tempId,
+          action.payload.message,
+          state
+        );
+      }
+      return [action.payload.message, ...state];
     default:
       return state;
   }
@@ -188,6 +250,9 @@ export interface IMessageResponse {
   message: string;
   createdAt: string;
 }
+export interface ICreateMessageResponse {
+  newMessage: IMessageResponse;
+}
 
 export interface IFetchMessagesResponse {
   messages: IMessage[];
@@ -195,18 +260,27 @@ export interface IFetchMessagesResponse {
 
 // Create Message
 export function* watchCreateMessageSaga() {
-  yield takeLatest(CREATE_MESSAGE_START, createMessageSaga);
+  yield takeEvery(CREATE_MESSAGE_START, createMessageSaga);
 }
 
 export function* createMessageSaga(action: CreateMessageStartAction) {
   try {
-    const apiKey = yield select(selectApiKey);
+    const tempId = moment().toString();
 
-    const url = `${API_URL}/notification/message?apiKey=${apiKey}`;
-    yield call(axios.post, url, {
+    const pendingMessage: IMessage = {
+      _id: tempId,
+      message: action.payload,
+      createdAt: tempId,
+      unResolved: true,
+    };
+    yield put(createMessagePending(pendingMessage));
+
+    const apiKey = yield select(selectApiKey);
+    const url = `${API_URL}/notification/message?apiKey=${apiKey}&tempId=${tempId}`;
+    const { newMessage }: ICreateMessageResponse = yield call(axios.post, url, {
       message: action.payload,
     });
-    yield put(createMessageSuccess());
+    yield put(createMessageSuccess({ tempId, message: newMessage }));
   } catch (error) {
     yield put(createMessageFailure(error));
   }
@@ -292,5 +366,22 @@ export function removeDuplicateMessages(messages: IMessage[]) {
     }
     seen.add(message._id);
     return true;
+  });
+}
+
+export function resolveMessage(
+  tempId: string,
+  resolvedMessage: IMessageResponse,
+  messages: IMessage[]
+) {
+  return messages.map((message) => {
+    if (message._id === tempId) {
+      return {
+        ...message,
+        ...resolvedMessage,
+        unResolved: false,
+      };
+    }
+    return message;
   });
 }

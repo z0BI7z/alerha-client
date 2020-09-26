@@ -7,7 +7,7 @@ import {
   fetchMessagesStart,
   addMessageStart,
   createMessageStart,
-  IMessage,
+  IMessageResponse,
 } from "../modules/messages";
 import { Redirect } from "react-router-dom";
 import { API_URL } from "../config";
@@ -27,9 +27,18 @@ function Messages() {
       socket.on("connect", () => {
         socket.emit("initialize", userId);
       });
-      socket.on("new-message", (newMessage: IMessage) => {
-        dispatch(addMessageStart(newMessage));
-      });
+      socket.on(
+        "new-message",
+        ({
+          newMessage,
+          tempId,
+        }: {
+          newMessage: IMessageResponse;
+          tempId?: string;
+        }) => {
+          dispatch(addMessageStart({ message: newMessage, tempId }));
+        }
+      );
     }
   }, [dispatch, isLoggedIn, userId]);
 
