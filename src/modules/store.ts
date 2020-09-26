@@ -10,18 +10,22 @@ import logger from "redux-logger";
 import createSagaMiddleware from "redux-saga";
 import { all, call } from "redux-saga/effects";
 import { userReducer, IUserState, userSagas } from "./user";
+import { messagesReducer, IMessagesState, messagesSagas } from "./messages";
 
 export interface IState {
   user: IUserState;
+  messages: IMessagesState;
 }
 
 const rootReducer = combineReducers({
   user: userReducer,
+  messages: messagesReducer,
 });
 
 const persistConfig = {
   key: "root",
   storage,
+  blacklist: ["messages"],
 };
 const persistedRootReducer = persistReducer(persistConfig, rootReducer);
 
@@ -40,7 +44,7 @@ export const store = createStore(
 export const persistor = persistStore(store as any);
 
 function* rootSaga() {
-  yield all([call(userSagas)]);
+  yield all([call(userSagas), call(messagesSagas)]);
 }
 
 sagaMiddleware.run(rootSaga);

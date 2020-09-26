@@ -5,7 +5,14 @@ function Home() {
   const history = useHistory();
 
   return (
-    <div>
+    <div
+      style={{
+        margin: "1rem auto",
+        maxWidth: "36rem",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       Home
       <button onClick={() => history.push("/account")}>Account</button>
     </div>

@@ -51,23 +51,16 @@ function Profile() {
       </button>
       <p>Dashboard</p>
       <button type="button" onClick={fetchToken}>
-        Fetch Token
+        Reset Token
       </button>
       <p style={{ overflowWrap: "break-word" }}>{token || "No token."}</p>
-      {apiKey ? (
-        <React.Fragment>
-          <button type="button" onClick={fetchApiKey}>
-            Fetch Api Key
-          </button>
-          <p style={{ overflowWrap: "break-word" }}>
-            {apiKey || "No api key."}
-          </p>
-        </React.Fragment>
-      ) : (
-        <button type="button" onClick={createApiKey}>
-          Create Api Key
-        </button>
-      )}
+      <button type="button" onClick={fetchApiKey}>
+        Fetch Api Key
+      </button>
+      <button type="button" onClick={createApiKey}>
+        {apiKey ? "Reset api key" : "Create an api key"}
+      </button>
+      <p style={{ overflowWrap: "break-word" }}>{apiKey || "No api key."}</p>
     </div>
   );
 }

@@ -10,6 +10,9 @@ import { ApiErrorResponseTypes } from "../config";
 // --- ACTION TYPES ---
 const USER_TEST = "USER_TEST";
 
+const INVALID_REFRESH_TOKEN = "INVALID_REFRESH_TOKEN";
+const INVALID_TOKEN = "INVALID_TOKEN";
+
 const USER_SIGNUP_START = "USER_SIGNUP_START";
 const USER_SIGNUP_SUCCESS = "USER_SIGNUP_SUCCESS";
 const USER_SIGNUP_FAILURE = "USER_SIGNUP_FAILURE";
@@ -45,13 +48,13 @@ export function userTest() {
 
 export function invalidRefreshToken() {
   return {
-    type: ApiErrorResponseTypes.INVALID_REFRESH_TOKEN as typeof ApiErrorResponseTypes.INVALID_REFRESH_TOKEN,
+    type: INVALID_REFRESH_TOKEN as typeof INVALID_REFRESH_TOKEN,
   };
 }
 
 export function invalidToken() {
   return {
-    type: ApiErrorResponseTypes.INVALID_TOKEN as typeof ApiErrorResponseTypes.INVALID_TOKEN,
+    type: INVALID_TOKEN as typeof INVALID_TOKEN,
   };
 }
 
@@ -265,9 +268,9 @@ type UserActions =
 // --- REDUCER ---
 export interface IUserState {
   profile: {
-    id: string;
-    email: string;
-  } | null;
+    id: string | null;
+    email: string | null;
+  };
   token: string | null;
   refreshToken: string | null;
   tokenExpiration: string | null;
@@ -275,8 +278,11 @@ export interface IUserState {
   apiKey: string | null;
 }
 
-export const INITIAL_STATE: IUserState = {
-  profile: null,
+export const USER_INITIAL_STATE: IUserState = {
+  profile: {
+    id: null,
+    email: null,
+  },
   token: null,
   refreshToken: null,
   tokenExpiration: null,
@@ -284,7 +290,7 @@ export const INITIAL_STATE: IUserState = {
   apiKey: null,
 };
 
-export function userReducer(state = INITIAL_STATE, action: UserActions) {
+export function userReducer(state = USER_INITIAL_STATE, action: UserActions) {
   switch (action.type) {
     case USER_SIGNUP_SUCCESS:
     case USER_LOGIN_SUCCESS:
@@ -296,7 +302,10 @@ export function userReducer(state = INITIAL_STATE, action: UserActions) {
     case USER_LOGIN_FAILURE:
       return {
         ...state,
-        profile: null,
+        profile: {
+          id: null,
+          email: null,
+        },
         token: null,
         refreshToken: null,
         tokenExpiration: null,
@@ -305,9 +314,12 @@ export function userReducer(state = INITIAL_STATE, action: UserActions) {
       };
     case USER_SIGNOUT_FAILURE:
     case USER_SIGNOUT_SUCCESS:
-    case ApiErrorResponseTypes.INVALID_REFRESH_TOKEN:
+    case INVALID_REFRESH_TOKEN:
       return {
-        profile: null,
+        profile: {
+          id: null,
+          email: null,
+        },
         token: null,
         refreshToken: null,
         tokenExpiration: null,
@@ -321,7 +333,7 @@ export function userReducer(state = INITIAL_STATE, action: UserActions) {
         tokenExpiration: action.payload.tokenExpiration,
       };
     case FETCH_TOKEN_FAILURE:
-    case ApiErrorResponseTypes.INVALID_TOKEN:
+    case INVALID_TOKEN:
       return {
         ...state,
         token: null,
@@ -378,6 +390,16 @@ export const selectIsLoggedIn = createSelector(
 
 export const selectApiKey = createSelector([selectUser], (user) => user.apiKey);
 
+export const selectProfile = createSelector(
+  [selectUser],
+  (user) => user.profile
+);
+
+export const selectUserId = createSelector(
+  [selectProfile],
+  (profile) => profile.id
+);
+
 // --- SAGAS ---
 
 // Types
@@ -415,8 +437,8 @@ export interface IApiKeyResponse {
 
 // Handle API Typed Errors
 function* handleApiTypedErrors(error: any) {
-  if (error.response && error.response.type) {
-    switch (error.response.type) {
+  if (error.response && error.response.data && error.response.data.type) {
+    switch (error.response.data.type) {
       case ApiErrorResponseTypes.INVALID_REFRESH_TOKEN:
         yield put(invalidRefreshToken());
         break;
@@ -441,12 +463,6 @@ function* checkValidRefreshToken() {
     !refreshTokenExpiration ||
     moment(refreshTokenExpiration).isBefore(moment())
   ) {
-    const isLoggedIn: ReturnType<typeof selectIsLoggedIn> = yield select(
-      selectIsLoggedIn
-    );
-    if (isLoggedIn) {
-      yield put(signOutStart());
-    }
     return false;
   }
 
@@ -478,11 +494,12 @@ function* ensureValidRefreshToken() {
       throw error;
     }
   } catch (error) {
+    yield put(invalidRefreshToken());
     throw error;
   }
 }
 
-function* ensureValidToken() {
+export function* ensureValidToken() {
   try {
     const isValidToken = yield call(checkValidToken);
     if (!isValidToken) {
@@ -490,6 +507,7 @@ function* ensureValidToken() {
       yield put(fetchTokenStart());
     }
   } catch (error) {
+    yield put(invalidToken());
     throw error;
   }
 }
@@ -602,6 +620,7 @@ export function* signOutSaga() {
     );
     yield put(signOutSuccess());
   } catch (error) {
+    yield call(handleApiTypedErrors, error);
     yield put(signOutFailure(error));
   }
 }
@@ -615,6 +634,7 @@ export function* fetchTokenSaga() {
   try {
     const isRefreshTokenValid: boolean = yield call(checkValidRefreshToken);
     if (!isRefreshTokenValid) {
+      yield put(invalidRefreshToken());
       const error = Error("Invalid refresh token.");
       throw error;
     }
@@ -649,7 +669,6 @@ export function* fetchApiKeySaga() {
     const token: ReturnType<typeof selectToken> = yield select(selectToken);
 
     const url = API_URL + "/api-key";
-
     const response = yield call(axios.get, url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -673,6 +692,8 @@ export function* watchCreateApiKeySaga() {
 
 export function* createApiKeySaga() {
   try {
+    yield call(ensureValidToken);
+
     const token: ReturnType<typeof selectToken> = yield select(selectToken);
 
     const url = API_URL + "/api-key";
