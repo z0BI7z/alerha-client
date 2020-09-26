@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import io from "socket.io-client";
 import { selectIsLoggedIn, selectUserId } from "../modules/user";
@@ -11,6 +11,14 @@ import {
 } from "../modules/messages";
 import { Redirect } from "react-router-dom";
 import { API_URL } from "../config";
+import {
+  MessagesContainer,
+  MessagesHeader,
+  MessagesTitle,
+} from "./messages/styles";
+import MessagesActions from "./messages/MessagesActions";
+import NewMessage from "./messages/NewMessage";
+import Message from "./messages/Message";
 
 function Messages() {
   const isLoggedIn = useSelector(selectIsLoggedIn);
@@ -44,11 +52,9 @@ function Messages() {
 
   const messages = useSelector(selectMessages);
 
-  const [newMessage, setNewMessage] = useState("");
   const createMessage = useCallback(
     (message: string) => {
       dispatch(createMessageStart(message));
-      setNewMessage("");
     },
     [dispatch]
   );
@@ -58,33 +64,16 @@ function Messages() {
   }
 
   return (
-    <div
-      style={{
-        margin: "1rem auto",
-        maxWidth: "36rem",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div>Messages</div>
-      <div>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <button type="button" onClick={() => createMessage(newMessage)}>
-          +
-        </button>
-      </div>
+    <MessagesContainer>
+      <MessagesHeader>
+        <MessagesTitle>Messages</MessagesTitle>
+        <MessagesActions />
+      </MessagesHeader>
+      <NewMessage onSubmit={createMessage} />
       {messages.map(({ _id, message, createdAt }) => {
-        return (
-          <div key={_id}>
-            {message} - {createdAt}
-          </div>
-        );
+        return <Message key={_id} message={message} createdAt={createdAt} />;
       })}
-    </div>
+    </MessagesContainer>
   );
 }
 

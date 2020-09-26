@@ -56,26 +56,25 @@ export function createMessagePending(message: IMessage) {
   };
 }
 
-export function createMessageSuccess({
-  tempId,
-  message,
-}: {
-  tempId: string;
-  message: IMessageResponse;
-}) {
+export function createMessageSuccess() {
   return {
     type: CREATE_MESSAGE_SUCCESS as typeof CREATE_MESSAGE_SUCCESS,
-    payload: {
-      tempId,
-      message,
-    },
   };
 }
 
-export function createMessageFailure(error: Error) {
+export function createMessageFailure({
+  error,
+  tempId,
+}: {
+  error: Error;
+  tempId?: string;
+}) {
   return {
-    type: CREATE_MESSAGE_SUCCESS as typeof CREATE_MESSAGE_FAILURE,
-    payload: error,
+    type: CREATE_MESSAGE_FAILURE as typeof CREATE_MESSAGE_FAILURE,
+    payload: {
+      error,
+      tempId,
+    },
   };
 }
 
@@ -200,7 +199,7 @@ type MessagesActions =
 
 export type IMessagesState = IMessage[];
 
-export const MESSAGES_INITIAL_STATE = [];
+export const MESSAGES_INITIAL_STATE: IMessagesState = [];
 
 export function messagesReducer(
   state = MESSAGES_INITIAL_STATE,
@@ -213,12 +212,8 @@ export function messagesReducer(
       return removeDuplicateMessages([...state, ...action.payload]);
     case CREATE_MESSAGE_PENDING:
       return [action.payload, ...state];
-    case CREATE_MESSAGE_SUCCESS:
-      return resolveMessage(
-        action.payload.tempId,
-        action.payload.message,
-        state
-      );
+    case CREATE_MESSAGE_FAILURE:
+      return state;
     case ADD_MESSAGE_SUCCESS:
       if (action.payload.tempId) {
         return resolveMessage(
@@ -264,9 +259,8 @@ export function* watchCreateMessageSaga() {
 }
 
 export function* createMessageSaga(action: CreateMessageStartAction) {
+  const tempId = moment().toISOString();
   try {
-    const tempId = moment().toString();
-
     const pendingMessage: IMessage = {
       _id: tempId,
       message: action.payload,
@@ -277,12 +271,13 @@ export function* createMessageSaga(action: CreateMessageStartAction) {
 
     const apiKey = yield select(selectApiKey);
     const url = `${API_URL}/notification/message?apiKey=${apiKey}&tempId=${tempId}`;
-    const { newMessage }: ICreateMessageResponse = yield call(axios.post, url, {
+    yield call(axios.post, url, {
       message: action.payload,
     });
-    yield put(createMessageSuccess({ tempId, message: newMessage }));
+
+    yield put(createMessageSuccess());
   } catch (error) {
-    yield put(createMessageFailure(error));
+    yield put(createMessageFailure({ error, tempId }));
   }
 }
 

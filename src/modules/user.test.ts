@@ -12,7 +12,7 @@ const mockedJwtDecode = jwtDecode as jest.Mock;
 describe("User Reducer", () => {
   it("should return initial state", () => {
     expect(userModule.userReducer(undefined, userModule.userTest())).toEqual(
-      userModule.INITIAL_STATE
+      userModule.USER_INITIAL_STATE
     );
   });
 
