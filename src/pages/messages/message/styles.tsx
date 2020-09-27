@@ -5,8 +5,8 @@ export const MessageContainer = styled.div`
   padding: 0.5rem 1rem;
   border-radius: 6px;
   background-color: white;
-  box-shadow: 1px 4px 0.4rem rgba(0, 0, 0, 0.15),
-    -1px -4px 0.5rem rgba(255, 255, 255, 0.8);
+  box-shadow: 1px 4px 6px rgba(0, 0, 0, 0.1),
+    -1px -4px 6px rgba(255, 255, 255, 0.8);
   display: inline-block;
   align-self: flex-start;
 `;

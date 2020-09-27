@@ -1,67 +1,28 @@
-import React, { useEffect, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Redirect } from "react-router-dom";
-import {
-  selectIsLoggedIn,
-  selectToken,
-  selectApiKey,
-  signOutStart,
-  fetchTokenStart,
-  fetchApiKeyStart,
-  createApiKeyStart,
-} from "../../modules/user";
+import { selectIsLoggedIn } from "../../modules/user";
+import { ProfileContainer } from "./profile/styles";
+import Spacer from "../../components/Spacer";
+import ProfilePanel from "./profile/ProfilePanel";
+import ProfileSection from "./profile/ProfileSection";
 
 function Profile() {
-  const dispatch = useDispatch();
   const isLoggedIn = useSelector(selectIsLoggedIn);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      dispatch(fetchApiKeyStart());
-    }
-  }, [isLoggedIn, dispatch]);
-
-  const token = useSelector(selectToken);
-  const apiKey = useSelector(selectApiKey);
-
-  const signOut = useCallback(() => dispatch(signOutStart()), [dispatch]);
-  const fetchToken = useCallback(() => dispatch(fetchTokenStart()), [dispatch]);
-  const fetchApiKey = useCallback(() => dispatch(fetchApiKeyStart()), [
-    dispatch,
-  ]);
-  const createApiKey = useCallback(() => dispatch(createApiKeyStart()), [
-    dispatch,
-  ]);
+  const [section, setSection] = useState("apiKey");
 
   if (!isLoggedIn) {
-    return <Redirect to="/account/login" />;
+    return <Redirect to="/account/authenticate" />;
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        maxWidth: "36rem",
-        margin: "1rem auto",
-      }}
-    >
-      <button type="button" onClick={signOut}>
-        Sign Out
-      </button>
-      <p>Dashboard</p>
-      <button type="button" onClick={fetchToken}>
-        Reset Token
-      </button>
-      <p style={{ overflowWrap: "break-word" }}>{token || "No token."}</p>
-      <button type="button" onClick={fetchApiKey}>
-        Fetch Api Key
-      </button>
-      <button type="button" onClick={createApiKey}>
-        {apiKey ? "Reset api key" : "Create an api key"}
-      </button>
-      <p style={{ overflowWrap: "break-word" }}>{apiKey || "No api key."}</p>
-    </div>
+    <ProfileContainer>
+      <Spacer height="3rem" />
+      <ProfilePanel currentSection={section} onSelect={setSection} />
+      <Spacer width="2rem" />
+      <ProfileSection section={section} />
+    </ProfileContainer>
   );
 }
 

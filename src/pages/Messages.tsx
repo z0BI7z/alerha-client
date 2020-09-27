@@ -47,6 +47,9 @@ function Messages() {
           dispatch(addMessageStart({ message: newMessage, tempId }));
         }
       );
+      socket.on("delete-messages", () => {
+        dispatch(fetchMessagesStart());
+      });
     }
   }, [dispatch, isLoggedIn, userId]);
 
@@ -60,7 +63,7 @@ function Messages() {
   );
 
   if (!isLoggedIn) {
-    return <Redirect to="/account/login" />;
+    return <Redirect to="/account/authenticate" />;
   }
 
   return (

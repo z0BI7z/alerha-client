@@ -34,7 +34,7 @@ function NewMessage({ onSubmit }: INewMessageProps) {
         size="large"
         onKeyDown={handleEnter}
       />
-      <Spacer />
+      <Spacer width="1rem" />
       <Button
         shape="circle"
         icon={<ArrowRightOutlined />}

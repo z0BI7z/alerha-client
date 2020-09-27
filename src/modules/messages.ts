@@ -39,6 +39,10 @@ export const ADD_MESSAGE_START = "ADD_MESSAGE_START";
 export const ADD_MESSAGE_SUCCESS = "ADD_MESSAGE_SUCCESS";
 export const ADD_MESSAGE_FAILURE = "ADD_MESSAGE_FAILURE";
 
+export const DELETE_MESSAGES_START = "DELETE_MESSAGES_START";
+export const DELETE_MESSAGES_SUCCESS = "DELETE_MESSAGES_SUCCESS";
+export const DELETE_MESSAGES_FAILURE = "DELETE_MESSAGES_FAILURE";
+
 // --- ACTION CREATORS ---
 
 // Create Message
@@ -161,6 +165,26 @@ export function addMessageFailure(error: Error) {
   };
 }
 
+// Delete Messages
+export function deleteMessagesStart(date?: string) {
+  return {
+    type: DELETE_MESSAGES_START as typeof DELETE_MESSAGES_START,
+    payload: date,
+  };
+}
+
+export function deleteMessagesSuccess() {
+  return {
+    type: DELETE_MESSAGES_SUCCESS as typeof DELETE_MESSAGES_SUCCESS,
+  };
+}
+
+export function deleteMessagesFailure() {
+  return {
+    type: DELETE_MESSAGES_FAILURE as typeof DELETE_MESSAGES_FAILURE,
+  };
+}
+
 // Action Creator Return Types
 type CreateMessageStartAction = ReturnType<typeof createMessageStart>;
 type CreateMessagePendingAction = ReturnType<typeof createMessagePending>;
@@ -179,6 +203,9 @@ type FetchMoreMessagesFailureAction = ReturnType<
 type AddMessageStartAction = ReturnType<typeof addMessageStart>;
 type AddMessageSuccessAction = ReturnType<typeof addMessageSuccess>;
 type AddMessageFailureAction = ReturnType<typeof addMessageFailure>;
+type DeleteMessagesStartAction = ReturnType<typeof deleteMessagesStart>;
+type DeleteMessagesSuccessAction = ReturnType<typeof deleteMessagesSuccess>;
+type DeleteMessagesFailureAction = ReturnType<typeof deleteMessagesFailure>;
 
 type MessagesActions =
   | CreateMessageStartAction
@@ -193,7 +220,10 @@ type MessagesActions =
   | FetchMoreMessagesFailureAction
   | AddMessageStartAction
   | AddMessageSuccessAction
-  | AddMessageFailureAction;
+  | AddMessageFailureAction
+  | DeleteMessagesStartAction
+  | DeleteMessagesSuccessAction
+  | DeleteMessagesFailureAction;
 
 // --- REDUCER ---
 
@@ -289,7 +319,6 @@ export function* watchFetchMessagesSaga() {
 export function* fetchMessagesSaga() {
   try {
     yield call(ensureValidToken);
-
     const token: ReturnType<typeof selectToken> = yield select(selectToken);
 
     const url = API_URL + "/notification/message";
@@ -313,7 +342,6 @@ export function* watchFetchMoreMessagesSaga() {
 export function* fetchMoreMessagesSaga(action: FetchMoreMessagesStartAction) {
   try {
     yield call(ensureValidToken);
-
     const token: ReturnType<typeof selectToken> = yield select(selectToken);
 
     const url = `${API_URL}/notification/message?skip=${action.payload}`;
@@ -342,12 +370,40 @@ export function* addMessageSaga(action: AddMessageStartAction) {
   }
 }
 
+// Delete Messages
+export function* watchDeleteMessagesSaga() {
+  yield takeLatest(DELETE_MESSAGES_START, deleteMessagesSaga);
+}
+
+export function* deleteMessagesSaga(action: DeleteMessagesStartAction) {
+  try {
+    yield call(ensureValidToken);
+    const token: ReturnType<typeof selectToken> = yield select(selectToken);
+
+    let url = `${API_URL}/notification/message`;
+    if (action.payload) {
+      url += `?date=${action.payload}`;
+    }
+
+    yield call(axios.delete, url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    yield put(deleteMessagesSuccess());
+  } catch (error) {
+    yield put(deleteMessagesFailure());
+  }
+}
+
 export function* messagesSagas() {
   yield all([
     call(watchCreateMessageSaga),
     call(watchFetchMessagesSaga),
     call(watchFetchMoreMessagesSaga),
     call(watchAddMessageSaga),
+    call(watchDeleteMessagesSaga),
   ]);
 }
 

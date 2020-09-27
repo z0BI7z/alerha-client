@@ -37,6 +37,14 @@ const CREATE_API_KEY_START = "CREATE_API_KEY_START";
 const CREATE_API_KEY_SUCCESS = "CREATE_API_KEY_SUCCESS";
 const CREATE_API_KEY_FAILURE = "CREATE_API_KEY_FAILURE";
 
+const RESET_EMAIL_START = "RESET_EMAIL_START";
+const RESET_EMAIL_SUCCESS = "RESET_EMAIL_SUCCESS";
+const RESET_EMAIL_FAILURE = "RESET_EMAIL_FAILURE";
+
+const RESET_PASSWORD_START = "RESET_PASSWORD_START";
+const RESET_PASSWORD_SUCCESS = "RESET_PASSWORD_SUCCESS";
+const RESET_PASSWORD_FAILURE = "RESET_PASSWORD_FAILURE";
+
 // --- ACTION CREATORS ---
 
 // Errors
@@ -219,6 +227,72 @@ export function createApiKeyFailure(error: Error) {
   };
 }
 
+// Reset Email
+export function resetEmailStart({
+  newEmail,
+  password,
+}: {
+  newEmail: string;
+  password: string;
+}) {
+  return {
+    type: RESET_EMAIL_START as typeof RESET_EMAIL_START,
+    payload: {
+      newEmail,
+      password,
+    },
+  };
+}
+
+export type IResetEmailUserInfo = ISignUpUserInfo;
+
+export function resetEmailSuccess(userInfo: IResetEmailUserInfo) {
+  return {
+    type: RESET_EMAIL_SUCCESS as typeof RESET_EMAIL_SUCCESS,
+    payload: userInfo,
+  };
+}
+
+export function resetEmailFailure(error: Error) {
+  return {
+    type: RESET_EMAIL_FAILURE as typeof RESET_EMAIL_FAILURE,
+    payload: error,
+  };
+}
+
+// Reset Password
+export function resetPasswordStart({
+  password,
+  newPassword,
+}: {
+  password: string;
+  newPassword: string;
+}) {
+  return {
+    type: RESET_PASSWORD_START as typeof RESET_PASSWORD_START,
+    payload: {
+      password,
+      newPassword,
+    },
+  };
+}
+
+export type IResetPasswordUserInfo = ISignUpUserInfo;
+
+export function resetPasswordSuccess(userInfo: IResetPasswordUserInfo) {
+  return {
+    type: RESET_PASSWORD_SUCCESS as typeof RESET_PASSWORD_SUCCESS,
+    payload: userInfo,
+  };
+}
+
+export function resetPasswordFailure(error: Error) {
+  return {
+    type: RESET_PASSWORD_FAILURE as typeof RESET_PASSWORD_FAILURE,
+    payload: error,
+  };
+}
+
 // Action Creator Return Types
 type UserTestAction = ReturnType<typeof userTest>;
 type InvalidRefreshTokenAction = ReturnType<typeof invalidRefreshToken>;
@@ -241,6 +315,12 @@ type CreateApiKeyFailureAction = ReturnType<typeof createApiKeyFailure>;
 type FetchTokenStartAction = ReturnType<typeof fetchTokenStart>;
 type FetchTokenSuccessAction = ReturnType<typeof fetchTokenSuccess>;
 type FetchTokenFailureAction = ReturnType<typeof fetchTokenFailure>;
+type ResetEmailStartAction = ReturnType<typeof resetEmailStart>;
+type ResetEmailSuccessAction = ReturnType<typeof resetEmailSuccess>;
+type ResetEmailFailureAction = ReturnType<typeof resetEmailFailure>;
+type ResetPasswordStartAction = ReturnType<typeof resetPasswordStart>;
+type ResetPasswordSuccessAction = ReturnType<typeof resetPasswordSuccess>;
+type ResetPasswordFailureAction = ReturnType<typeof resetPasswordFailure>;
 
 type UserActions =
   | UserTestAction
@@ -263,7 +343,13 @@ type UserActions =
   | CreateApiKeyFailureAction
   | FetchTokenStartAction
   | FetchTokenSuccessAction
-  | FetchTokenFailureAction;
+  | FetchTokenFailureAction
+  | ResetEmailStartAction
+  | ResetEmailSuccessAction
+  | ResetEmailFailureAction
+  | ResetPasswordStartAction
+  | ResetPasswordSuccessAction
+  | ResetPasswordFailureAction;
 
 // --- REDUCER ---
 export interface IUserState {
@@ -294,6 +380,8 @@ export function userReducer(state = USER_INITIAL_STATE, action: UserActions) {
   switch (action.type) {
     case USER_SIGNUP_SUCCESS:
     case USER_LOGIN_SUCCESS:
+    case RESET_EMAIL_SUCCESS:
+    case RESET_PASSWORD_SUCCESS:
       return {
         ...state,
         ...action.payload,
@@ -388,6 +476,11 @@ export const selectIsLoggedIn = createSelector(
     moment(tokenExpiration).isAfter(moment())
 );
 
+export const selectIsTokenExpired = createSelector(
+  [selectTokenExpiration],
+  (date) => moment(date).isBefore(moment())
+);
+
 export const selectApiKey = createSelector([selectUser], (user) => user.apiKey);
 
 export const selectProfile = createSelector(
@@ -398,6 +491,11 @@ export const selectProfile = createSelector(
 export const selectUserId = createSelector(
   [selectProfile],
   (profile) => profile.id
+);
+
+export const selectEmail = createSelector(
+  [selectProfile],
+  (profile) => profile.email
 );
 
 // --- SAGAS ---
@@ -418,6 +516,8 @@ export interface ISignUpResponse {
 }
 
 export type ILoginResponse = ISignUpResponse;
+export type IResetEmailResponse = ISignUpResponse;
+export type IResetPasswordResponse = ISignUpResponse;
 
 export interface IDecodedToken {
   userId: string;
@@ -658,6 +758,7 @@ export function* fetchTokenSaga() {
   }
 }
 
+// Fetch Api Key
 export function* watchFetchApiKeySaga() {
   yield takeLatest(FETCH_API_KEY_START, fetchApiKeySaga);
 }
@@ -665,7 +766,6 @@ export function* watchFetchApiKeySaga() {
 export function* fetchApiKeySaga() {
   try {
     yield call(ensureValidToken);
-
     const token: ReturnType<typeof selectToken> = yield select(selectToken);
 
     const url = API_URL + "/api-key";
@@ -686,6 +786,7 @@ export function* fetchApiKeySaga() {
   }
 }
 
+// Create Api Key
 export function* watchCreateApiKeySaga() {
   yield takeLatest(CREATE_API_KEY_START, createApiKeySaga);
 }
@@ -693,7 +794,6 @@ export function* watchCreateApiKeySaga() {
 export function* createApiKeySaga() {
   try {
     yield call(ensureValidToken);
-
     const token: ReturnType<typeof selectToken> = yield select(selectToken);
 
     const url = API_URL + "/api-key";
@@ -720,6 +820,108 @@ export function* createApiKeySaga() {
   }
 }
 
+// Reset Email
+export function* watchResetEmailSaga() {
+  yield takeLatest(RESET_EMAIL_START, resetEmailSaga);
+}
+
+export function* resetEmailSaga(action: ResetEmailStartAction) {
+  try {
+    yield call(ensureValidToken);
+    const currentToken: ReturnType<typeof selectToken> = yield select(
+      selectToken
+    );
+
+    const url = API_URL + "/auth/reset-email";
+    const response = yield call(
+      axios.post,
+      url,
+      {
+        newEmail: action.payload.newEmail,
+        password: action.payload.password,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      }
+    );
+
+    const { token, refreshToken, user }: IResetEmailResponse = response.data;
+    const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
+    const { expiration: refreshTokenExpiration }: IDecodedToken = jwtDecode(
+      refreshToken
+    );
+    const profile = {
+      id: user._id,
+      email: user.email,
+    };
+
+    yield put(
+      resetEmailSuccess({
+        profile,
+        token,
+        refreshToken,
+        tokenExpiration,
+        refreshTokenExpiration,
+      })
+    );
+  } catch (error) {
+    yield put(resetEmailFailure(error));
+  }
+}
+
+// Reset Password
+export function* watchResetPasswordSaga() {
+  yield takeLatest(RESET_PASSWORD_START, resetPasswordSaga);
+}
+
+export function* resetPasswordSaga(action: ResetPasswordStartAction) {
+  try {
+    yield call(ensureValidToken);
+    const currentToken: ReturnType<typeof selectToken> = yield select(
+      selectToken
+    );
+
+    const url = API_URL + "/auth/reset-password";
+    const response = yield call(
+      axios.post,
+      url,
+      {
+        password: action.payload.password,
+        newPassword: action.payload.newPassword,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      }
+    );
+
+    const { token, refreshToken, user }: IResetPasswordResponse = response.data;
+    const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
+    const { expiration: refreshTokenExpiration }: IDecodedToken = jwtDecode(
+      refreshToken
+    );
+    const profile = {
+      id: user._id,
+      email: user.email,
+    };
+
+    yield put(
+      resetPasswordSuccess({
+        profile,
+        token,
+        refreshToken,
+        tokenExpiration,
+        refreshTokenExpiration,
+      })
+    );
+  } catch (error) {
+    yield put(resetPasswordFailure(error));
+  }
+}
+
 export function* userSagas() {
   yield all([
     call(watchSignUpSaga),
@@ -728,5 +930,7 @@ export function* userSagas() {
     call(watchFetchTokenSaga),
     call(watchFetchApiKeySaga),
     call(watchCreateApiKeySaga),
+    call(watchResetEmailSaga),
+    call(watchResetPasswordSaga),
   ]);
 }
