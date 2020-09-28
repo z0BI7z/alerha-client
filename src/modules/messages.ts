@@ -437,7 +437,7 @@ export function resolveMessage(
     }
     return message;
   });
-  if (alreadyExists) {
+  if (!alreadyExists) {
     updatedMessages = [resolvedMessage, ...messages];
   }
   return updatedMessages;
