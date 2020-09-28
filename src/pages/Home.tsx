@@ -1,9 +1,6 @@
 import React from "react";
-import { useHistory } from "react-router-dom";
 
 function Home() {
-  const history = useHistory();
-
   return (
     <div
       style={{
@@ -13,8 +10,7 @@ function Home() {
         flexDirection: "column",
       }}
     >
-      Home
-      <button onClick={() => history.push("/account")}>Account</button>
+      <h2>Welcome to Alerha!</h2>
     </div>
   );
 }
