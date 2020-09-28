@@ -425,8 +425,10 @@ export function resolveMessage(
   resolvedMessage: IMessageResponse,
   messages: IMessage[]
 ) {
-  return messages.map((message) => {
+  let alreadyExists = false;
+  let updatedMessages = messages.map((message) => {
     if (message._id === tempId) {
+      alreadyExists = true;
       return {
         ...message,
         ...resolvedMessage,
@@ -435,4 +437,8 @@ export function resolveMessage(
     }
     return message;
   });
+  if (alreadyExists) {
+    updatedMessages = [resolvedMessage, ...messages];
+  }
+  return updatedMessages;
 }
