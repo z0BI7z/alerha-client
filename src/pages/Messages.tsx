@@ -11,6 +11,7 @@ import {
 } from "../modules/messages";
 import { Redirect } from "react-router-dom";
 import { API_URL } from "../config";
+import RefreshApiKey from "../components/RefreshApiKey";
 import {
   MessagesContainer,
   MessagesHeader,
@@ -67,16 +68,18 @@ function Messages() {
   }
 
   return (
-    <MessagesContainer>
-      <MessagesHeader>
-        <MessagesTitle>Messages</MessagesTitle>
-        <MessagesActions />
-      </MessagesHeader>
-      <NewMessage onSubmit={createMessage} />
-      {messages.map(({ _id, message, createdAt }) => {
-        return <Message key={_id} message={message} createdAt={createdAt} />;
-      })}
-    </MessagesContainer>
+    <RefreshApiKey>
+      <MessagesContainer>
+        <MessagesHeader>
+          <MessagesTitle>Messages</MessagesTitle>
+          <MessagesActions />
+        </MessagesHeader>
+        <NewMessage onSubmit={createMessage} />
+        {messages.map(({ _id, message, createdAt }) => {
+          return <Message key={_id} message={message} createdAt={createdAt} />;
+        })}
+      </MessagesContainer>
+    </RefreshApiKey>
   );
 }
 

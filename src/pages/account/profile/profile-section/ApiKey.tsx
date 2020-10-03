@@ -1,12 +1,8 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
-import {
-  selectApiKey,
-  fetchApiKeyStart,
-  createApiKeyStart,
-} from "../../../../modules/user";
+import { selectApiKey, createApiKeyStart } from "../../../../modules/user";
 import {
   ApiKeyCopyContainer,
   ApiKeyLabel,
@@ -17,10 +13,6 @@ import Spacer from "../../../../components/Spacer";
 function ApiKey() {
   const dispatch = useDispatch();
   const apiKey = useSelector(selectApiKey);
-
-  useEffect(() => {
-    dispatch(fetchApiKeyStart());
-  }, [dispatch]);
 
   const createApiKey = useCallback(() => dispatch(createApiKeyStart()), [
     dispatch,
