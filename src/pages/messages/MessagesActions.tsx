@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { useDispatch } from "react-redux";
 import moment from "moment";
 import { Dropdown, Menu } from "antd";
@@ -86,4 +86,4 @@ function MessagesActions() {
   );
 }
 
-export default MessagesActions;
+export default memo(MessagesActions);
