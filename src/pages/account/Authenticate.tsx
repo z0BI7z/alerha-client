@@ -24,14 +24,18 @@ function Authenticate() {
     if (authState === "login") {
       dispatch(loginStart(values));
     } else {
-      if (executeRecaptcha) {
-        const token = await executeRecaptcha("signup");
-        dispatch(
-          signUpStart({
-            ...values,
-            token,
-          })
-        );
+      try {
+        if (executeRecaptcha) {
+          const recaptchaToken = await executeRecaptcha();
+          dispatch(
+            signUpStart({
+              ...values,
+              recaptchaToken,
+            })
+          );
+        }
+      } catch (error) {
+        console.log(error);
       }
     }
   };

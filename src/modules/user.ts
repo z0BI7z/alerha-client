@@ -70,18 +70,18 @@ export function invalidToken() {
 export function signUpStart({
   email,
   password,
-  token,
+  recaptchaToken,
 }: {
   email: string;
   password: string;
-  token: string;
+  recaptchaToken: string;
 }) {
   return {
     type: USER_SIGNUP_START as typeof USER_SIGNUP_START,
     payload: {
       email,
       password,
-      token,
+      recaptchaToken,
     },
   };
 }
@@ -626,7 +626,7 @@ export function* signUpSaga(action: SignUpStartAction) {
     const response = yield call(axios.post, url, {
       email: action.payload.email,
       password: action.payload.password,
-      token: action.payload.token,
+      recaptchaToken: action.payload.recaptchaToken,
     });
     const { token, refreshToken, user }: ISignUpResponse = response.data;
     const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);

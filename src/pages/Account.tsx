@@ -9,10 +9,7 @@ function Account() {
   const { path } = useRouteMatch();
 
   return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={RECAPTCHA_KEY}
-      scriptProps={{ async: true }}
-    >
+    <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_KEY}>
       <Route path={`${path}/authenticate`} component={Authenticate} />
       <Route exact path={`${path}`} component={Profile} />
     </GoogleReCaptchaProvider>
