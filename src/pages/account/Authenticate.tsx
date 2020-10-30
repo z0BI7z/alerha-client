@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Redirect } from "react-router-dom";
 import { Form, Input, Button } from "antd";
 import { selectIsLoggedIn, loginStart, signUpStart } from "../../modules/user";
@@ -13,16 +14,25 @@ function Authenticate() {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const dispatch = useDispatch();
   const [authState, setAuthState] = useState("login");
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   if (isLoggedIn) {
     return <Redirect to="/account" />;
   }
 
-  const login = (values: { email: string; password: string }) => {
+  const handleSubmit = async (values: { email: string; password: string }) => {
     if (authState === "login") {
       dispatch(loginStart(values));
     } else {
-      dispatch(signUpStart(values));
+      if (executeRecaptcha) {
+        const token = await executeRecaptcha("signup");
+        dispatch(
+          signUpStart({
+            ...values,
+            token,
+          })
+        );
+      }
     }
   };
 
@@ -48,7 +58,7 @@ function Authenticate() {
           email: process.env.NODE_ENV === "development" ? "a@c.com" : "",
           password: process.env.NODE_ENV === "development" ? "testing" : "",
         }}
-        onFinish={login}
+        onFinish={handleSubmit}
       >
         <label>Email</label>
         <Form.Item
