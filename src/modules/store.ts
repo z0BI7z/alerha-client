@@ -11,15 +11,18 @@ import createSagaMiddleware from "redux-saga";
 import { all, call } from "redux-saga/effects";
 import { userReducer, IUserState, userSagas } from "./user";
 import { messagesReducer, IMessagesState, messagesSagas } from "./messages";
+import { lastActionReducer, LastActionState } from "./lastAction";
 
 export interface IState {
   user: IUserState;
   messages: IMessagesState;
+  lastAction: LastActionState;
 }
 
 const rootReducer = combineReducers({
   user: userReducer,
   messages: messagesReducer,
+  lastAction: lastActionReducer,
 });
 
 const persistConfig = {

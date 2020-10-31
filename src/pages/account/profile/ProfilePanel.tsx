@@ -1,7 +1,10 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { signOutStart } from "../../../modules/user";
-import { ProfilePanelItem } from "./profile-panel/styles";
+import {
+  ProfilePanelContainer,
+  ProfilePanelItem,
+} from "./profile-panel/styles";
 
 interface IProfileNavigationProps {
   currentSection: string;
@@ -16,20 +19,18 @@ function ProfileNavigation({
   const signOut = () => dispatch(signOutStart());
 
   return (
-    <div style={{ width: "25%" }}>
-      <ProfilePanelItem onClick={() => onSelect("email")}>{`Change Email ${
+    <ProfilePanelContainer>
+      <ProfilePanelItem onClick={() => onSelect("email")}>{`${
         currentSection === "email" ? "*" : ""
-      }`}</ProfilePanelItem>
-      <ProfilePanelItem
-        onClick={() => onSelect("password")}
-      >{`Change Password ${
+      } Change Email`}</ProfilePanelItem>
+      <ProfilePanelItem onClick={() => onSelect("password")}>{`${
         currentSection === "password" ? "*" : ""
-      }`}</ProfilePanelItem>
-      <ProfilePanelItem onClick={() => onSelect("apiKey")}>{`Api Key ${
+      } Change Password`}</ProfilePanelItem>
+      <ProfilePanelItem onClick={() => onSelect("apiKey")}>{`${
         currentSection === "apiKey" ? "*" : ""
-      }`}</ProfilePanelItem>
+      } Api Key`}</ProfilePanelItem>
       <ProfilePanelItem onClick={signOut}>Sign Out</ProfilePanelItem>
-    </div>
+    </ProfilePanelContainer>
   );
 }
 

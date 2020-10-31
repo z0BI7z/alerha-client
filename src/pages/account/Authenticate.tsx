@@ -1,20 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Redirect } from "react-router-dom";
 import { Form, Input, Button } from "antd";
-import { selectIsLoggedIn, loginStart, signUpStart } from "../../modules/user";
+import {
+  selectIsLoggedIn,
+  loginStart,
+  signUpStart,
+  USER_SIGNUP_FAILURE,
+  USER_LOGIN_FAILURE,
+} from "../../modules/user";
+import useLastAction from "../../utils/useLastAction";
 import Spacer from "../../components/Spacer";
 import {
   AuthenticateContainer,
   AuthenticateSwitch,
 } from "./authenticate/styles";
 
+const listeningActionTypes = [USER_SIGNUP_FAILURE, USER_LOGIN_FAILURE];
+
 function Authenticate() {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const dispatch = useDispatch();
   const [authState, setAuthState] = useState("login");
   const { executeRecaptcha } = useGoogleReCaptcha();
+
+  const callback = useCallback((error: string) => {
+    alert(error);
+  }, []);
+  useLastAction(listeningActionTypes, callback);
 
   if (isLoggedIn) {
     return <Redirect to="/account" />;
@@ -49,14 +63,7 @@ function Authenticate() {
   };
 
   return (
-    <AuthenticateContainer
-      style={{
-        margin: "1rem auto",
-        maxWidth: "36rem",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <AuthenticateContainer>
       <Form
         initialValues={{
           email: process.env.NODE_ENV === "development" ? "a@c.com" : "",

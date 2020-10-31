@@ -14,7 +14,7 @@ function ProfileSection({ section }: IProfileSectionProps) {
     case "password":
       return <Password />;
     case "apiKey":
-      return <ApiKey></ApiKey>;
+      return <ApiKey />;
     default:
       return <p>Invalid section.</p>;
   }

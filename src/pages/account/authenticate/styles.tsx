@@ -1,9 +1,7 @@
 import styled from "styled-components";
 
 export const AuthenticateContainer = styled.div`
-  max-width: 36rem;
-  margin: 1rem auto;
-  padding: 0 2rem;
+  padding: 1rem 2rem;
   display: flex;
   flex-direction: column;
 `;

@@ -12,6 +12,7 @@ function MainNavBar() {
 
   return (
     <MainNavBarContainer>
+      <MainNavBarItem href="/">Alerha</MainNavBarItem>
       <MainNavBarInnerContainer>
         <MainNavBarItem href="/message">Messages</MainNavBarItem>
         <MainNavBarItem href="/account">

@@ -19,6 +19,7 @@ function Profile() {
 
   return (
     <RefreshApiKey>
+      <h2>Account</h2>
       <ProfileContainer>
         <Spacer height="3rem" />
         <ProfilePanel currentSection={section} onSelect={setSection} />

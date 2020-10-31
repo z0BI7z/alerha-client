@@ -8,42 +8,42 @@ import { IState } from "./store";
 import { ApiErrorResponseTypes } from "../config";
 
 // --- ACTION TYPES ---
-const USER_TEST = "USER_TEST";
+export const USER_TEST = "USER_TEST";
 
-const INVALID_REFRESH_TOKEN = "INVALID_REFRESH_TOKEN";
-const INVALID_TOKEN = "INVALID_TOKEN";
+export const INVALID_REFRESH_TOKEN = "INVALID_REFRESH_TOKEN";
+export const INVALID_TOKEN = "INVALID_TOKEN";
 
-const USER_SIGNUP_START = "USER_SIGNUP_START";
-const USER_SIGNUP_SUCCESS = "USER_SIGNUP_SUCCESS";
-const USER_SIGNUP_FAILURE = "USER_SIGNUP_FAILURE";
+export const USER_SIGNUP_START = "USER_SIGNUP_START";
+export const USER_SIGNUP_SUCCESS = "USER_SIGNUP_SUCCESS";
+export const USER_SIGNUP_FAILURE = "USER_SIGNUP_FAILURE";
 
-const USER_LOGIN_START = "USER_LOGIN_START";
-const USER_LOGIN_SUCCESS = "USER_LOGIN_SUCCESS";
-const USER_LOGIN_FAILURE = "USER_LOGIN_FAILURE";
+export const USER_LOGIN_START = "USER_LOGIN_START";
+export const USER_LOGIN_SUCCESS = "USER_LOGIN_SUCCESS";
+export const USER_LOGIN_FAILURE = "USER_LOGIN_FAILURE";
 
-const USER_SIGNOUT_START = "USER_SIGNOUT_START";
-const USER_SIGNOUT_SUCCESS = "USER_SIGNOUT_SUCCESS";
-const USER_SIGNOUT_FAILURE = "USER_SIGNOUT_FAILURE";
+export const USER_SIGNOUT_START = "USER_SIGNOUT_START";
+export const USER_SIGNOUT_SUCCESS = "USER_SIGNOUT_SUCCESS";
+export const USER_SIGNOUT_FAILURE = "USER_SIGNOUT_FAILURE";
 
-const FETCH_TOKEN_START = "FETCH_TOKEN_START";
-const FETCH_TOKEN_SUCCESS = "FETCH_TOKEN_SUCCESS";
-const FETCH_TOKEN_FAILURE = "FETCH_TOKEN_FAILURE";
+export const FETCH_TOKEN_START = "FETCH_TOKEN_START";
+export const FETCH_TOKEN_SUCCESS = "FETCH_TOKEN_SUCCESS";
+export const FETCH_TOKEN_FAILURE = "FETCH_TOKEN_FAILURE";
 
-const FETCH_API_KEY_START = "FETCH_API_KEY_START";
-const FETCH_API_KEY_SUCCESS = "FETCH_API_KEY_SUCCESS";
-const FETCH_API_KEY_FAILURE = "FETCH_API_KEY_FAILURE";
+export const FETCH_API_KEY_START = "FETCH_API_KEY_START";
+export const FETCH_API_KEY_SUCCESS = "FETCH_API_KEY_SUCCESS";
+export const FETCH_API_KEY_FAILURE = "FETCH_API_KEY_FAILURE";
 
-const CREATE_API_KEY_START = "CREATE_API_KEY_START";
-const CREATE_API_KEY_SUCCESS = "CREATE_API_KEY_SUCCESS";
-const CREATE_API_KEY_FAILURE = "CREATE_API_KEY_FAILURE";
+export const CREATE_API_KEY_START = "CREATE_API_KEY_START";
+export const CREATE_API_KEY_SUCCESS = "CREATE_API_KEY_SUCCESS";
+export const CREATE_API_KEY_FAILURE = "CREATE_API_KEY_FAILURE";
 
-const RESET_EMAIL_START = "RESET_EMAIL_START";
-const RESET_EMAIL_SUCCESS = "RESET_EMAIL_SUCCESS";
-const RESET_EMAIL_FAILURE = "RESET_EMAIL_FAILURE";
+export const RESET_EMAIL_START = "RESET_EMAIL_START";
+export const RESET_EMAIL_SUCCESS = "RESET_EMAIL_SUCCESS";
+export const RESET_EMAIL_FAILURE = "RESET_EMAIL_FAILURE";
 
-const RESET_PASSWORD_START = "RESET_PASSWORD_START";
-const RESET_PASSWORD_SUCCESS = "RESET_PASSWORD_SUCCESS";
-const RESET_PASSWORD_FAILURE = "RESET_PASSWORD_FAILURE";
+export const RESET_PASSWORD_START = "RESET_PASSWORD_START";
+export const RESET_PASSWORD_SUCCESS = "RESET_PASSWORD_SUCCESS";
+export const RESET_PASSWORD_FAILURE = "RESET_PASSWORD_FAILURE";
 
 // --- ACTION CREATORS ---
 
@@ -105,9 +105,10 @@ export function signUpSuccess(userInfo: ISignUpUserInfo) {
 }
 
 export function signUpFailure(error: Error) {
+  console.log(error);
   return {
     type: USER_SIGNUP_FAILURE as typeof USER_SIGNUP_FAILURE,
-    payload: error.message,
+    payload: typeof error === "string" ? error : error.message,
   };
 }
 
@@ -137,10 +138,10 @@ export function loginSuccess(userInfo: ILoginUserInfo) {
   };
 }
 
-export function loginFailure(error: Error) {
+export function loginFailure(error: Error | string) {
   return {
     type: USER_LOGIN_FAILURE as typeof USER_LOGIN_FAILURE,
-    payload: error.message,
+    payload: typeof error === "string" ? error : error.message,
   };
 }
 
@@ -650,7 +651,8 @@ export function* signUpSaga(action: SignUpStartAction) {
     return;
   } catch (error) {
     yield call(handleApiTypedErrors, error);
-    yield put(signUpFailure(error));
+    console.log(error.response.data);
+    yield put(signUpFailure(error.response?.data?.message || error));
     return;
   }
 }
@@ -690,7 +692,7 @@ export function* loginSaga(action: LoginStartAction) {
     return;
   } catch (error) {
     yield call(handleApiTypedErrors, error);
-    yield put(loginFailure(error));
+    yield put(loginFailure(error.response?.data?.message || error));
     return;
   }
 }

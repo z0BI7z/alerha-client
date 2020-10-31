@@ -4,6 +4,7 @@ import { Button } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import { selectApiKey, createApiKeyStart } from "../../../../modules/user";
 import {
+  ApiKeyContainer,
   ApiKeyCopyContainer,
   ApiKeyLabel,
   ApiKeyCopyText,
@@ -25,11 +26,11 @@ function ApiKey() {
   };
 
   return (
-    <div>
+    <ApiKeyContainer>
       <ApiKeyLabel>Your Key:</ApiKeyLabel>
       <ApiKeyCopyContainer>
         <ApiKeyCopyText>{apiKey ? apiKey : "No api key"}</ApiKeyCopyText>
-        <Spacer width="1rem" />
+        <Spacer width=".5rem" />
         <Button
           type="dashed"
           shape="circle-outline"
@@ -41,7 +42,7 @@ function ApiKey() {
       <Button onClick={createApiKey}>
         {apiKey ? "Reset key" : "Generate an api key"}
       </Button>
-    </div>
+    </ApiKeyContainer>
   );
 }
 

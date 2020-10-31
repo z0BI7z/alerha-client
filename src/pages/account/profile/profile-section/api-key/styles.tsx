@@ -1,8 +1,14 @@
 import styled from "styled-components";
 
+export const ApiKeyContainer = styled.div`
+  padding: 0 0.5rem;
+`;
+
 export const ApiKeyCopyContainer = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
 `;
 
 export const ApiKeyLabel = styled.label`
@@ -11,4 +17,6 @@ export const ApiKeyLabel = styled.label`
 
 export const ApiKeyCopyText = styled.p`
   margin: 0;
+  display: inline-block;
+  word-break: break-word;
 `;
