@@ -117,7 +117,7 @@ function Home() {
             <a
               href="https://github.com/z0BI7z/alerha-client"
               target={"_blank"}
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               client
             </a>
@@ -126,7 +126,7 @@ function Home() {
             <a
               href="https://github.com/z0BI7z/alerha-server"
               target={"_blank"}
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               server
             </a>
@@ -135,7 +135,7 @@ function Home() {
             <a
               href="https://github.com/z0BI7z/alerha-deploy"
               target={"_blank"}
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               deployment
             </a>
