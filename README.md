@@ -1,3 +1,3 @@
 # Alerha Client
 
-Client side for [https://alerha.com](alerha.com).
+Client side for [alerha.com](https://alerha.com).
