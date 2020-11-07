@@ -629,6 +629,8 @@ export function* signUpSaga(action: SignUpStartAction) {
       password: action.payload.password,
       recaptchaToken: action.payload.recaptchaToken,
     });
+    console.log("response:", response);
+
     const { token, refreshToken, user }: ISignUpResponse = response.data;
     const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
     const { expiration: refreshTokenExpiration }: IDecodedToken = jwtDecode(
@@ -651,7 +653,6 @@ export function* signUpSaga(action: SignUpStartAction) {
     return;
   } catch (error) {
     yield call(handleApiTypedErrors, error);
-    console.log(error.response.data);
     yield put(signUpFailure(error.response?.data?.message || error));
     return;
   }
@@ -669,6 +670,7 @@ export function* loginSaga(action: LoginStartAction) {
       email: action.payload.email,
       password: action.payload.password,
     });
+    console.log("response:", response);
 
     const { token, refreshToken, user }: ILoginResponse = response.data;
     const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
