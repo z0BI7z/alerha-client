@@ -24,7 +24,7 @@ function Home() {
         <h4>What is Alerha?</h4>
         <p>
           {`
-        Alerha is a dead simple way to send messages to yourself through post requests.
+        Alerha is a dead simple way to send real-time messages to yourself through post requests.
         `}
         </p>
       </div>
@@ -32,12 +32,16 @@ function Home() {
       <div>
         <h4>How do I get started?</h4>
         <ul style={{ listStyle: "none" }}>
-          <li>1. Create an account.</li>
+          <li>
+            1. <a href="/account">Create an account.</a>
+          </li>
           <li>
             2. Navigate to the{" "}
             <span style={{ fontStyle: "italic" }}>Api Key</span> section in your{" "}
-            <span style={{ fontStyle: "italic" }}>Account</span> page and then
-            click on{" "}
+            <span style={{ fontStyle: "italic" }}>
+              <a href="/account">Account</a>
+            </span>{" "}
+            page and then click on{" "}
             <span style={{ fontStyle: "italic" }}>Generate an api key</span>.
           </li>
           <li>
@@ -52,8 +56,11 @@ function Home() {
             . (Without the carets).
           </li>
           <li>
-            4. View your messages in the{" "}
-            <span style={{ fontStyle: "italic" }}>Messages</span> page.
+            4. View your messages in real-time in the{" "}
+            <span style={{ fontStyle: "italic" }}>
+              <a href="/message">Messages</a>
+            </span>{" "}
+            page.
           </li>
         </ul>
       </div>
