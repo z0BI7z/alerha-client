@@ -1,8 +1,16 @@
 import { createSelector } from "reselect";
 import { IState } from "./store";
 
+export const NULL_ACTION = "NULL_ACTION";
+
+export function clearLastAction() {
+  return {
+    type: NULL_ACTION,
+  };
+}
+
 export interface LastActionState {
-  type: string | null;
+  type: string;
   payload: any;
 }
 
@@ -12,12 +20,12 @@ export interface LastActionAction {
 }
 
 const LAST_ACTION_INITIAL_STATE: LastActionState = {
-  type: null,
+  type: NULL_ACTION,
   payload: null,
 };
 
 export function lastActionReducer(
-  state = LAST_ACTION_INITIAL_STATE,
+  _state = LAST_ACTION_INITIAL_STATE,
   action: LastActionAction
 ) {
   if (!action.payload) {

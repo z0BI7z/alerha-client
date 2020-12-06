@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import useDidChange from "./useDidChange";
 import { selectLastAction } from "../modules/lastAction";
+import useDidChange from "./useDidChange";
 
 export default function useLastAction(
   types: string | string[],
@@ -15,7 +15,7 @@ export default function useLastAction(
     }
 
     if (typeof types === "string") {
-      if (types === lastAction.type!) {
+      if (types === lastAction.type) {
         callback(lastAction.payload);
       }
     } else {

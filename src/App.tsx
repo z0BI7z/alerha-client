@@ -1,11 +1,12 @@
-import React, { Suspense, lazy } from "react";
+import React, { lazy, Suspense } from "react";
 import { Provider } from "react-redux";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import { PersistGate } from "redux-persist/integration/react";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { BrowserRouter, Switch, Route } from "react-router-dom";
-import { store, persistor } from "./modules/store";
-import RefreshLogin from "./components/RefreshLogin";
 import MainNavBar from "./components/MainNavBar";
+import RefreshLogin from "./components/RefreshLogin";
+import { persistor, store } from "./modules/store";
 const Home = lazy(() => import("./pages/Home"));
 const Account = lazy(() => import("./pages/Account"));
 const Messages = lazy(() => import("./pages/Messages"));
@@ -26,6 +27,7 @@ function App() {
                 </Switch>
               </BrowserRouter>
             </RefreshLogin>
+            <ToastContainer />
           </Suspense>
         </ErrorBoundary>
       </PersistGate>

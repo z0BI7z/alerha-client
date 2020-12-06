@@ -1,11 +1,10 @@
-import { createSelector } from "reselect";
-import { takeLatest, call, put, select, all } from "redux-saga/effects";
 import axios from "axios";
-import moment from "moment";
 import jwtDecode from "jwt-decode";
-import { API_URL } from "../config";
+import moment from "moment";
+import { all, call, put, select, takeLatest } from "redux-saga/effects";
+import { createSelector } from "reselect";
+import { ApiErrorResponseTypes, API_URL } from "../config";
 import { IState } from "./store";
-import { ApiErrorResponseTypes } from "../config";
 
 // --- ACTION TYPES ---
 export const USER_TEST = "USER_TEST";
@@ -232,18 +231,11 @@ export function createApiKeyFailure(error: Error) {
 }
 
 // Reset Email
-export function resetEmailStart({
-  newEmail,
-  password,
-}: {
-  newEmail: string;
-  password: string;
-}) {
+export function resetEmailStart({ newEmail }: { newEmail: string }) {
   return {
     type: RESET_EMAIL_START as typeof RESET_EMAIL_START,
     payload: {
       newEmail,
-      password,
     },
   };
 }
@@ -558,9 +550,9 @@ function* checkValidRefreshToken() {
   const refreshToken: ReturnType<typeof selectRefreshToken> = yield select(
     selectRefreshToken
   );
-  const refreshTokenExpiration: ReturnType<typeof selectRefreshTokenExpiration> = yield select(
-    selectRefreshTokenExpiration
-  );
+  const refreshTokenExpiration: ReturnType<
+    typeof selectRefreshTokenExpiration
+  > = yield select(selectRefreshTokenExpiration);
 
   if (
     !refreshToken ||
@@ -575,9 +567,9 @@ function* checkValidRefreshToken() {
 
 function* checkValidToken() {
   const token: ReturnType<typeof selectToken> = yield select(selectToken);
-  const tokenExpiration: ReturnType<typeof selectTokenExpiration> = yield select(
-    selectTokenExpiration
-  );
+  const tokenExpiration: ReturnType<
+    typeof selectTokenExpiration
+  > = yield select(selectTokenExpiration);
 
   if (
     !token ||
@@ -629,7 +621,6 @@ export function* signUpSaga(action: SignUpStartAction) {
       password: action.payload.password,
       recaptchaToken: action.payload.recaptchaToken,
     });
-    console.log("response:", response);
 
     const { token, refreshToken, user }: ISignUpResponse = response.data;
     const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
@@ -670,7 +661,6 @@ export function* loginSaga(action: LoginStartAction) {
       email: action.payload.email,
       password: action.payload.password,
     });
-    console.log("response:", response);
 
     const { token, refreshToken, user }: ILoginResponse = response.data;
     const { expiration: tokenExpiration }: IDecodedToken = jwtDecode(token);
@@ -846,7 +836,6 @@ export function* resetEmailSaga(action: ResetEmailStartAction) {
       url,
       {
         newEmail: action.payload.newEmail,
-        password: action.payload.password,
       },
       {
         headers: {
@@ -875,7 +864,8 @@ export function* resetEmailSaga(action: ResetEmailStartAction) {
       })
     );
   } catch (error) {
-    yield put(resetEmailFailure(error));
+    yield call(handleApiTypedErrors, error);
+    yield put(resetEmailFailure(error.response?.data?.message || error));
   }
 }
 
@@ -926,7 +916,8 @@ export function* resetPasswordSaga(action: ResetPasswordStartAction) {
       })
     );
   } catch (error) {
-    yield put(resetPasswordFailure(error));
+    yield call(handleApiTypedErrors, error);
+    yield put(resetPasswordFailure(error.response?.data?.message || error));
   }
 }
 

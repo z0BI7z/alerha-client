@@ -1,17 +1,18 @@
-import React, { useState, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { Button, Form, Input } from "antd";
+import React, { useCallback, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { useDispatch, useSelector } from "react-redux";
 import { Redirect } from "react-router-dom";
-import { Form, Input, Button } from "antd";
+import { toast } from "react-toastify";
+import Spacer from "../../components/Spacer";
 import {
-  selectIsLoggedIn,
   loginStart,
+  selectIsLoggedIn,
   signUpStart,
-  USER_SIGNUP_FAILURE,
   USER_LOGIN_FAILURE,
+  USER_SIGNUP_FAILURE,
 } from "../../modules/user";
 import useLastAction from "../../utils/useLastAction";
-import Spacer from "../../components/Spacer";
 import {
   AuthenticateContainer,
   AuthenticateSwitch,
@@ -25,10 +26,14 @@ function Authenticate() {
   const [authState, setAuthState] = useState("login");
   const { executeRecaptcha } = useGoogleReCaptcha();
 
-  const callback = useCallback((error: string) => {
-    alert(error);
+  const notify = useCallback((error: string) => {
+    toast.error(error, {
+      autoClose: 2000,
+      position: toast.POSITION.TOP_CENTER,
+      pauseOnHover: false,
+    });
   }, []);
-  useLastAction(listeningActionTypes, callback);
+  useLastAction(listeningActionTypes, notify);
 
   if (isLoggedIn) {
     return <Redirect to="/account" />;
