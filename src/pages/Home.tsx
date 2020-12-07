@@ -114,6 +114,7 @@ function Home() {
         Other:
         <ul>
           <li>JWT + refresh tokens</li>
+          <li>reCAPTCHA</li>
         </ul>
       </div>
       <Spacer height={"1rem"} />
