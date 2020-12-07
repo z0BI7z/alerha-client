@@ -9,9 +9,9 @@ export const AuthenticateContainer = styled.div`
 export const AuthenticateSwitch = styled.p`
   display: inline-block;
   margin-right: auto;
+  color: #1890ff;
 
   &:hover {
     cursor: pointer;
-    color: #1890ff;
   }
 `;

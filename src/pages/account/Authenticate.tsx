@@ -2,9 +2,10 @@ import { Button, Form, Input } from "antd";
 import React, { useCallback, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useDispatch, useSelector } from "react-redux";
-import { Redirect } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
 import { toast } from "react-toastify";
 import Spacer from "../../components/Spacer";
+import { clearLastAction } from "../../modules/lastAction";
 import {
   loginStart,
   selectIsLoggedIn,
@@ -26,13 +27,17 @@ function Authenticate() {
   const [authState, setAuthState] = useState("login");
   const { executeRecaptcha } = useGoogleReCaptcha();
 
-  const notify = useCallback((error: string) => {
-    toast.error(error, {
-      autoClose: 2000,
-      position: toast.POSITION.TOP_CENTER,
-      pauseOnHover: false,
-    });
-  }, []);
+  const notify = useCallback(
+    (error: string) => {
+      toast.error(error, {
+        autoClose: 2000,
+        position: toast.POSITION.TOP_CENTER,
+        pauseOnHover: false,
+      });
+      dispatch(clearLastAction());
+    },
+    [dispatch]
+  );
   useLastAction(listeningActionTypes, notify);
 
   if (isLoggedIn) {
@@ -100,6 +105,12 @@ function Authenticate() {
         </Button>
       </Form>
       <Spacer height="1rem" />
+      {authState === "login" && (
+        <React.Fragment>
+          <Link to="/account/reset/password">Forgot Password?</Link>
+          <Spacer height="1rem" />
+        </React.Fragment>
+      )}
       <AuthenticateSwitch onClick={toggleAuthState}>
         {authState === "login"
           ? "Create an account"

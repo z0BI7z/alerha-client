@@ -1,10 +1,11 @@
 import React from "react";
-import { Route, useRouteMatch } from "react-router-dom";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
-import { AccountContainer } from "./account/styles";
+import { Route, useRouteMatch } from "react-router-dom";
+import { RECAPTCHA_KEY } from "../config";
 import Authenticate from "./account/Authenticate";
 import Profile from "./account/Profile";
-import { RECAPTCHA_KEY } from "../config";
+import Reset from "./account/Reset";
+import { AccountContainer } from "./account/styles";
 
 function Account() {
   const { path } = useRouteMatch();
@@ -13,6 +14,7 @@ function Account() {
     <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_KEY}>
       <AccountContainer>
         <Route path={`${path}/authenticate`} component={Authenticate} />
+        <Route path={`${path}/reset`} component={Reset} />
         <Route exact path={`${path}`} component={Profile} />
       </AccountContainer>
     </GoogleReCaptchaProvider>

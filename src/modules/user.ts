@@ -44,6 +44,19 @@ export const RESET_PASSWORD_START = "RESET_PASSWORD_START";
 export const RESET_PASSWORD_SUCCESS = "RESET_PASSWORD_SUCCESS";
 export const RESET_PASSWORD_FAILURE = "RESET_PASSWORD_FAILURE";
 
+export const CREATE_FORGOTTEN_PASSWORD_TOKEN_START =
+  "CREATE_FORGOTTEN_PASSWORD_TOKEN_START";
+export const CREATE_FORGOTTEN_PASSWORD_TOKEN_SUCCESS =
+  "CREATE_FORGOTTEN_PASSWORD_TOKEN_SUCCESS";
+export const CREATE_FORGOTTEN_PASSWORD_TOKEN_FAILURE =
+  "CREATE_FORGOTTEN_PASSWORD_TOKEN_FAILURE";
+
+export const RESET_FORGOTTEN_PASSWORD_START = "RESET_FORGOTTEN_PASSWORD_START";
+export const RESET_FORGOTTEN_PASSWORD_SUCCESS =
+  "RESET_FORGOTTEN_PASSWORD_SUCCESS";
+export const RESET_FORGOTTEN_PASSWORD_FAILURE =
+  "RESET_FORGOTTEN_PASSWORD_FAILURE";
+
 // --- ACTION CREATORS ---
 
 // Errors
@@ -289,6 +302,60 @@ export function resetPasswordFailure(error: Error) {
   };
 }
 
+// Forgot Password
+
+// reset forgotten password
+export function createForgottenPasswordTokenStart(email: string) {
+  return {
+    type: CREATE_FORGOTTEN_PASSWORD_TOKEN_START as typeof CREATE_FORGOTTEN_PASSWORD_TOKEN_START,
+    payload: email,
+  };
+}
+
+// reset forgotten password success
+export function createForgottenPasswordTokenSuccess() {
+  return {
+    type: CREATE_FORGOTTEN_PASSWORD_TOKEN_SUCCESS as typeof CREATE_FORGOTTEN_PASSWORD_TOKEN_SUCCESS,
+  };
+}
+
+// reset forgotten password failure
+export function createForgottenPasswordTokenFailure(errorMessage: string) {
+  return {
+    type: CREATE_FORGOTTEN_PASSWORD_TOKEN_FAILURE as typeof CREATE_FORGOTTEN_PASSWORD_TOKEN_FAILURE,
+    payload: errorMessage,
+  };
+}
+
+// reset forgotten password
+export function resetForgottenPasswordStart(
+  resetToken: string,
+  newPassword: string
+) {
+  return {
+    type: RESET_FORGOTTEN_PASSWORD_START as typeof RESET_FORGOTTEN_PASSWORD_START,
+    payload: {
+      resetToken,
+      newPassword,
+    },
+  };
+}
+
+// reset forgotten password success
+export function resetForgottenPasswordSuccess() {
+  return {
+    type: RESET_FORGOTTEN_PASSWORD_SUCCESS as typeof RESET_FORGOTTEN_PASSWORD_SUCCESS,
+  };
+}
+
+// reset forgotten password failure
+export function resetForgottenPasswordFailure(errorMessage: string) {
+  return {
+    type: RESET_FORGOTTEN_PASSWORD_FAILURE as typeof RESET_FORGOTTEN_PASSWORD_FAILURE,
+    payload: errorMessage,
+  };
+}
+
 // Action Creator Return Types
 type UserTestAction = ReturnType<typeof userTest>;
 type InvalidRefreshTokenAction = ReturnType<typeof invalidRefreshToken>;
@@ -317,6 +384,24 @@ type ResetEmailFailureAction = ReturnType<typeof resetEmailFailure>;
 type ResetPasswordStartAction = ReturnType<typeof resetPasswordStart>;
 type ResetPasswordSuccessAction = ReturnType<typeof resetPasswordSuccess>;
 type ResetPasswordFailureAction = ReturnType<typeof resetPasswordFailure>;
+type CreateForgottenPasswordTokenStartAction = ReturnType<
+  typeof createForgottenPasswordTokenStart
+>;
+type CreateForgottenPasswordTokenSuccessAction = ReturnType<
+  typeof createForgottenPasswordTokenSuccess
+>;
+type CreateForgottenPasswordTokenFailureAction = ReturnType<
+  typeof createForgottenPasswordTokenFailure
+>;
+type ResetForgottenPasswordStart = ReturnType<
+  typeof resetForgottenPasswordStart
+>;
+type ResetForgottenPasswordSuccess = ReturnType<
+  typeof resetForgottenPasswordSuccess
+>;
+type ResetForgottenPasswordFailure = ReturnType<
+  typeof resetForgottenPasswordFailure
+>;
 
 type UserActions =
   | UserTestAction
@@ -345,7 +430,13 @@ type UserActions =
   | ResetEmailFailureAction
   | ResetPasswordStartAction
   | ResetPasswordSuccessAction
-  | ResetPasswordFailureAction;
+  | ResetPasswordFailureAction
+  | CreateForgottenPasswordTokenStartAction
+  | CreateForgottenPasswordTokenSuccessAction
+  | CreateForgottenPasswordTokenFailureAction
+  | ResetForgottenPasswordStart
+  | ResetForgottenPasswordSuccess
+  | ResetForgottenPasswordFailure;
 
 // --- REDUCER ---
 export interface IUserState {
@@ -921,6 +1012,55 @@ export function* resetPasswordSaga(action: ResetPasswordStartAction) {
   }
 }
 
+// Forgotten password
+
+export function* watchCreateForgottenPasswordTokenSaga() {
+  yield takeLatest(
+    CREATE_FORGOTTEN_PASSWORD_TOKEN_START,
+    createForgottenPasswordTokenSaga
+  );
+}
+
+export function* createForgottenPasswordTokenSaga(
+  action: CreateForgottenPasswordTokenStartAction
+) {
+  try {
+    const email = action.payload;
+    const url = `${API_URL}/auth/forgot-password`;
+
+    yield call(axios.post, url, {
+      email,
+    });
+    yield put(createForgottenPasswordTokenSuccess());
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Operation failed.";
+    yield put(createForgottenPasswordTokenFailure(errorMessage));
+  }
+}
+
+export function* watchResetForgottenPasswordSaga() {
+  yield takeLatest(RESET_FORGOTTEN_PASSWORD_START, resetForgottenPasswordSaga);
+}
+
+export function* resetForgottenPasswordSaga(
+  action: ResetForgottenPasswordStart
+) {
+  try {
+    const { resetToken, newPassword } = action.payload;
+    const url = `${API_URL}/auth/reset-password-using-reset-token`;
+
+    yield call(axios.post, url, {
+      resetToken,
+      newPassword,
+    });
+
+    yield put(resetForgottenPasswordSuccess());
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Operation failed.";
+    yield put(resetForgottenPasswordFailure(errorMessage));
+  }
+}
+
 export function* userSagas() {
   yield all([
     call(watchSignUpSaga),
@@ -931,5 +1071,7 @@ export function* userSagas() {
     call(watchCreateApiKeySaga),
     call(watchResetEmailSaga),
     call(watchResetPasswordSaga),
+    call(watchCreateForgottenPasswordTokenSaga),
+    call(watchResetForgottenPasswordSaga),
   ]);
 }
