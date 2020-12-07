@@ -12,10 +12,10 @@ function MainNavBar() {
 
   return (
     <MainNavBarContainer>
-      <MainNavBarItem href="/">Alerha</MainNavBarItem>
+      <MainNavBarItem to="/">Alerha</MainNavBarItem>
       <MainNavBarInnerContainer>
-        <MainNavBarItem href="/message">Messages</MainNavBarItem>
-        <MainNavBarItem href="/account">
+        <MainNavBarItem to="/message">Messages</MainNavBarItem>
+        <MainNavBarItem to="/account">
           {isLoggedIn ? "Account" : "Login"}
         </MainNavBarItem>
       </MainNavBarInnerContainer>

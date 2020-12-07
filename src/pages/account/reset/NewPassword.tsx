@@ -35,7 +35,11 @@ const NewPassword = () => {
   useLastAction(RESET_FORGOTTEN_PASSWORD_SUCCESS, notifySuccess);
 
   if (finished) {
-    return <div>Password reset.</div>;
+    return (
+      <div>
+        <p>{`Password reset.`}</p>
+      </div>
+    );
   }
 
   return (

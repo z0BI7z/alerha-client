@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 export const MainNavBarContainer = styled.div`
@@ -13,6 +14,6 @@ export const MainNavBarInnerContainer = styled.div`
   width: 100%;
 `;
 
-export const MainNavBarItem = styled.a`
+export const MainNavBarItem = styled(Link)`
   margin: 0 0.5rem;
 `;

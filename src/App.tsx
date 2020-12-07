@@ -18,8 +18,8 @@ function App() {
         <ErrorBoundary>
           <Suspense fallback={<div></div>}>
             <RefreshLogin>
-              <MainNavBar />
               <BrowserRouter>
+                <MainNavBar />
                 <Switch>
                   <Route path="/account" component={Account} />
                   <Route path="/message" component={Messages} />
