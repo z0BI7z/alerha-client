@@ -51,6 +51,10 @@ function Messages() {
       socket.on("delete-messages", () => {
         dispatch(fetchMessagesStart());
       });
+
+      return () => {
+        socket.close();
+      };
     }
   }, [dispatch, isLoggedIn, userId]);
 
